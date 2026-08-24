@@ -1,0 +1,46 @@
+name: تحديث مستودع DEB
+
+on:
+  push:
+    paths:
+      - '**.deb'
+      - 'Packages'
+      - 'Packages.*'
+  workflow_dispatch:
+
+jobs:
+  update-repo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Update Packages files
+        run: |
+          if [ -f "Packages" ]; then
+            echo "Packages file exists, updating..."
+          else
+            echo "Creating Packages file..."
+            touch Packages
+          fi
+          gzip -c Packages > Packages.gz 2>/dev/null || true
+          xz -c Packages > Packages.xz 2>/dev/null || true
+          bzip2 -c Packages > Packages.bz2 2>/dev/null || true
+
+      - name: Commit and push
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add Packages Packages.gz Packages.xz Packages.bz2
+          git commit -m "تحديث تلقائي للمستودع" || echo "No changes to commit"
+          git push
+
+      - name: Create Release
+        if: success()
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.run_number }}
+          release_name: "تحديث المستودع ${{ github.run_number }}"
+          body: "تم تحديث المستودع تلقائياً عبر GitHub Actions"
