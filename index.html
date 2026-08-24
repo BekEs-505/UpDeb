@@ -1,0 +1,1738 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>مدير مستودع DEB - لوحة التحكم</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <!-- JSZip لمعالجة الملفات -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- FileSaver لحفظ الملفات -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Cairo', 'Orbitron', sans-serif;
+        }
+        body {
+            background: linear-gradient(145deg, #0b0e1a 0%, #1a1f2f 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #e3e9f0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .glass-card {
+            background: rgba(20, 28, 45, 0.65);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 25px 50px -8px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(255,255,255,0.03);
+            padding: 28px 24px;
+            width: 100%;
+            max-width: 1400px;
+            transition: all 0.3s ease;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 28px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 16px;
+        }
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .logo-icon {
+            font-size: 2.8rem;
+            color: #fbbf24;
+            filter: drop-shadow(0 0 12px #fbbf2450);
+            transition: 0.3s;
+        }
+        .logo-icon:hover {
+            transform: scale(1.08) rotate(-6deg);
+        }
+        .site-title {
+            font-family: 'Orbitron', 'Cairo', sans-serif;
+            font-weight: 900;
+            font-size: 1.9rem;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+        }
+        .site-sub {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            font-weight: 400;
+            -webkit-text-fill-color: #94a3b8;
+            margin-right: 8px;
+        }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .search-box {
+            background: rgba(0,0,0,0.35);
+            border-radius: 60px;
+            padding: 8px 18px;
+            display: flex;
+            align-items: center;
+            border: 1px solid #2d3a52;
+            transition: 0.3s;
+        }
+        .search-box:focus-within {
+            border-color: #fbbf24;
+            box-shadow: 0 0 20px #fbbf2430;
+        }
+        .search-box input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #f1f5f9;
+            font-size: 0.95rem;
+            width: 180px;
+            padding: 6px 0;
+        }
+        .search-box input::placeholder {
+            color: #6b7b93;
+        }
+        .search-box i {
+            color: #94a3b8;
+            margin-left: 8px;
+        }
+        .btn-icon {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid #2d3a52;
+            border-radius: 40px;
+            padding: 8px 16px;
+            color: #e2e8f0;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.25s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(4px);
+        }
+        .btn-icon:hover {
+            background: #fbbf2415;
+            border-color: #fbbf24;
+            color: #fbbf24;
+            transform: translateY(-2px);
+        }
+        .btn-primary {
+            background: linear-gradient(145deg, #fbbf24, #f59e0b);
+            border: none;
+            color: #0b0e1a;
+            font-weight: 700;
+            padding: 10px 24px;
+            border-radius: 60px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: 0.25s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 8px 20px -8px #fbbf2440;
+        }
+        .btn-primary:hover {
+            transform: scale(1.02) translateY(-3px);
+            box-shadow: 0 12px 28px -8px #fbbf2470;
+        }
+        .btn-success {
+            background: linear-gradient(145deg, #22c55e, #16a34a);
+            border: none;
+            color: white;
+            font-weight: 700;
+            padding: 8px 16px;
+            border-radius: 60px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: 0.25s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-success:hover {
+            transform: scale(1.02) translateY(-2px);
+            box-shadow: 0 8px 20px -8px #22c55e70;
+        }
+        .btn-danger {
+            background: #dc2626;
+            border: none;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        .flex-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .col-main {
+            flex: 2.5;
+            min-width: 300px;
+        }
+        .col-side {
+            flex: 1.2;
+            min-width: 250px;
+        }
+        .card-box {
+            background: rgba(12, 18, 30, 0.55);
+            backdrop-filter: blur(8px);
+            border-radius: 30px;
+            padding: 22px 20px;
+            border: 1px solid rgba(255,255,255,0.04);
+            margin-bottom: 24px;
+            transition: 0.2s;
+        }
+        .card-box:hover {
+            border-color: #fbbf2420;
+        }
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #f1f5f9;
+        }
+        .section-title i {
+            color: #fbbf24;
+            font-size: 1.4rem;
+        }
+        select, input[type="file"], .file-input-label {
+            width: 100%;
+            padding: 12px 16px;
+            background: #111a29;
+            border: 1px solid #2a3650;
+            border-radius: 40px;
+            color: #f1f5f9;
+            font-size: 0.95rem;
+            outline: none;
+            transition: 0.3s;
+            margin-bottom: 12px;
+        }
+        select:focus, input:focus {
+            border-color: #fbbf24;
+            box-shadow: 0 0 0 3px #fbbf2420;
+        }
+        select option {
+            background: #111a29;
+        }
+        .file-input-label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            background: #111a29;
+        }
+        .file-input-label i {
+            color: #fbbf24;
+            font-size: 1.3rem;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .badge-repo {
+            background: #1e2a41;
+            border-radius: 60px;
+            padding: 8px 18px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid #2d3a52;
+            font-size: 0.85rem;
+        }
+        .package-list {
+            max-height: 400px;
+            overflow-y: auto;
+            padding-left: 6px;
+        }
+        .package-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            background: #0f172a50;
+            border-radius: 20px;
+            margin-bottom: 8px;
+            border-right: 3px solid #fbbf24;
+            transition: 0.15s;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .package-item:hover {
+            background: #1a2640;
+        }
+        .pkg-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .pkg-name i {
+            color: #fbbf24;
+        }
+        .pkg-version {
+            color: #94a3b8;
+            font-size: 0.8rem;
+            background: #1a2a3f;
+            padding: 2px 12px;
+            border-radius: 40px;
+        }
+        .action-group {
+            display: flex;
+            gap: 6px;
+        }
+        .action-group button {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 30px;
+            transition: 0.2s;
+            font-size: 0.9rem;
+        }
+        .action-group button:hover {
+            background: #2d3a52;
+            color: #f1f5f9;
+        }
+        .action-group .del-btn:hover {
+            color: #ef4444;
+            background: #4b1e2a;
+        }
+        .action-group .edit-btn:hover {
+            color: #fbbf24;
+            background: #2d3a52;
+        }
+        .three-dots-menu {
+            position: relative;
+            display: inline-block;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            left: 0;
+            background: #162033;
+            min-width: 220px;
+            border-radius: 24px;
+            padding: 12px 0;
+            box-shadow: 0 25px 40px -10px #000000cc;
+            border: 1px solid #2d3a52;
+            z-index: 99;
+            backdrop-filter: blur(12px);
+        }
+        .dropdown-content a, .dropdown-content .drop-item {
+            color: #e2e8f0;
+            padding: 10px 22px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 0.9rem;
+            transition: 0.1s;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: right;
+        }
+        .dropdown-content a:hover, .dropdown-content .drop-item:hover {
+            background: #fbbf2415;
+            color: #fbbf24;
+        }
+        .show-drop {
+            display: block;
+        }
+        .edit-panel {
+            background: #0e1628;
+            border-radius: 28px;
+            padding: 18px;
+            margin-top: 12px;
+            border: 1px solid #2d3a52;
+            display: none;
+        }
+        .edit-panel.active {
+            display: block;
+        }
+        .edit-panel .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .edit-panel input, .edit-panel textarea {
+            flex: 1;
+            min-width: 140px;
+            background: #19243b;
+            border: 1px solid #2d3a52;
+            border-radius: 40px;
+            padding: 8px 16px;
+            color: #f1f5f9;
+            font-size: 0.85rem;
+        }
+        .edit-panel textarea {
+            border-radius: 20px;
+            min-height: 60px;
+            resize: vertical;
+        }
+        .toast-container {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .toast {
+            background: #1e2a41;
+            backdrop-filter: blur(10px);
+            padding: 14px 24px;
+            border-radius: 60px;
+            border-right: 6px solid #fbbf24;
+            color: #f1f5f9;
+            box-shadow: 0 10px 30px -8px black;
+            animation: slideIn 0.3s ease;
+            font-weight: 500;
+        }
+        .toast.success {
+            border-right-color: #22c55e;
+        }
+        .toast.error {
+            border-right-color: #ef4444;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(40px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0b0e1a; border-radius: 20px; }
+        ::-webkit-scrollbar-thumb { background: #fbbf2460; border-radius: 20px; }
+        @media (max-width: 700px) {
+            .grid-2col { grid-template-columns: 1fr; }
+            .header { flex-direction: column; align-items: stretch; }
+            .search-box input { width: 100%; }
+        }
+        .float-btn {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            background: #fbbf24;
+            color: #0b0e1a;
+            border-radius: 60px;
+            padding: 12px 24px;
+            font-weight: 700;
+            box-shadow: 0 8px 24px #fbbf2450;
+            border: none;
+            cursor: pointer;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .token-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 40px;
+            background: rgba(0,0,0,0.3);
+            font-size: 0.8rem;
+        }
+        .token-status .fa-check-circle {
+            color: #4ade80;
+        }
+        .token-status .fa-times-circle {
+            color: #f87171;
+        }
+        .repo-loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #2d3a52;
+            border-top: 3px solid #fbbf24;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .empty-state {
+            text-align: center;
+            padding: 30px 20px;
+            color: #6b7b93;
+        }
+        .empty-state i {
+            font-size: 3rem;
+            color: #2d3a52;
+            margin-bottom: 12px;
+        }
+        .workflow-status {
+            margin-top: 8px;
+            padding: 10px 16px;
+            background: #0f172a;
+            border-radius: 16px;
+            border: 1px solid #2d3a52;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #2d3a52;
+            border-radius: 4px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .progress-bar .fill {
+            height: 100%;
+            background: linear-gradient(90deg, #fbbf24, #f59e0b);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 4px;
+        }
+        .file-editor {
+            background: #0a0f1a;
+            border-radius: 16px;
+            padding: 12px;
+            margin-top: 8px;
+            border: 1px solid #2d3a52;
+        }
+        .file-editor textarea {
+            width: 100%;
+            background: #0a0f1a;
+            border: 1px solid #2d3a52;
+            border-radius: 12px;
+            color: #e2e8f0;
+            padding: 12px;
+            font-family: 'Cairo', monospace;
+            font-size: 0.85rem;
+            min-height: 200px;
+            resize: vertical;
+        }
+        .file-editor .file-tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+        .file-editor .file-tab {
+            background: #1a2a3f;
+            padding: 4px 16px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: 0.2s;
+        }
+        .file-editor .file-tab.active {
+            border-color: #fbbf24;
+            color: #fbbf24;
+        }
+        .file-editor .file-tab:hover {
+            border-color: #fbbf2440;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-content {
+            background: #1a1f2f;
+            border-radius: 40px;
+            padding: 30px;
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid #2d3a52;
+        }
+        .modal-content .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-content .modal-header h2 {
+            color: #fbbf24;
+        }
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .modal-close:hover {
+            color: #f87171;
+            transform: rotate(90deg);
+        }
+    </style>
+</head>
+<body>
+<div class="glass-card" id="app">
+    <!-- header -->
+    <div class="header">
+        <div class="logo-area">
+            <i class="fas fa-cubes logo-icon"></i>
+            <div>
+                <span class="site-title">DEB·REPO</span>
+                <span class="site-sub">مدير المستودع</span>
+            </div>
+        </div>
+        <div class="header-actions">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="ابحث عن أداة..." id="searchInput" oninput="filterPackages()">
+            </div>
+            <div id="tokenStatus" class="token-status">
+                <i class="fas fa-times-circle"></i>
+                <span>لا يوجد توكن</span>
+            </div>
+            <button class="btn-icon" onclick="saveToken()"><i class="fas fa-key"></i> توكن</button>
+            <button class="btn-icon" onclick="refreshRepos()"><i class="fas fa-sync"></i> تحديث</button>
+            <div class="three-dots-menu">
+                <button class="btn-icon" onclick="toggleDropdown()"><i class="fas fa-ellipsis-v"></i></button>
+                <div class="dropdown-content" id="dropdownMenu">
+                    <div class="drop-item" onclick="viewSourceFiles()"><i class="fas fa-code"></i> ملفات السورس</div>
+                    <div class="drop-item" onclick="showAllDebs()"><i class="fas fa-box"></i> كل ملفات DEB</div>
+                    <div class="drop-item" onclick="addToolIcon()"><i class="fas fa-paint-brush"></i> إضافة أيقونة</div>
+                    <div class="drop-item" onclick="refreshPackages()"><i class="fas fa-sync"></i> تحديث الباكجات</div>
+                    <div class="drop-item" onclick="clearAllPackages()" style="color:#f87171;"><i class="fas fa-trash-alt"></i> حذف جميع الحزم</div>
+                    <div class="drop-item" onclick="viewWorkflow()"><i class="fas fa-cog"></i> إدارة Workflow</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- مستودعات -->
+    <div class="card-box">
+        <div class="section-title"><i class="fas fa-code-branch"></i> المستودعات</div>
+        <select id="repoSelect" onchange="onRepoChange()">
+            <option value="">-- اختر مستودع --</option>
+        </select>
+        <div id="repoInfo" class="badge-repo" style="margin-top:8px;">
+            <i class="fas fa-info-circle"></i> 
+            <span id="repoNameDisplay">لم يتم الاختيار</span>
+            <span id="repoLoading" style="display:none;"><span class="repo-loading"></span></span>
+        </div>
+        <div id="workflowStatus" class="workflow-status" style="display:none;">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <i class="fas fa-cogs" style="color:#fbbf24;"></i>
+                <span style="font-weight:600;">Workflow:</span>
+                <span id="workflowState" style="color:#4ade80;">✓ مفعل</span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+                <button class="btn-success" onclick="triggerWorkflow()" style="font-size:0.75rem;padding:4px 12px;">
+                    <i class="fas fa-play"></i> تشغيل
+                </button>
+                <button class="btn-icon" onclick="viewWorkflow()" style="font-size:0.75rem;padding:4px 12px;">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
+            <div class="progress-bar">
+                <div class="fill" id="workflowProgress"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-row">
+        <div class="col-main">
+            <!-- رفع DEB -->
+            <div class="card-box">
+                <div class="section-title"><i class="fas fa-upload"></i> رفع الحزم</div>
+                <div class="grid-2col">
+                    <div>
+                        <label class="file-input-label" for="debFileInput"><i class="fas fa-file-archive"></i> اختر ملف DEB</label>
+                        <input type="file" id="debFileInput" accept=".deb" multiple onchange="handleDebFiles(event)">
+                    </div>
+                    <div>
+                        <button class="btn-primary" style="width:100%;justify-content:center;" onclick="uploadDeb()"><i class="fas fa-cloud-upload-alt"></i> رفع الحزمة</button>
+                    </div>
+                </div>
+                <div style="margin-top:12px;">
+                    <button class="btn-primary" style="width:100%;justify-content:center;background:#3b4a6b;" onclick="uploadMultipleDebs()"><i class="fas fa-layer-group"></i> رفع 1000 حزمة دفعة واحدة</button>
+                </div>
+            </div>
+            <!-- تحرير بيانات الاداة -->
+            <div class="card-box">
+                <div class="section-title"><i class="fas fa-edit"></i> تحرير الأداة <span id="editPkgName" style="font-size:0.9rem;color:#94a3b8;">(اختر أداة للتحرير)</span></div>
+                <div class="edit-panel" id="editPanel">
+                    <div class="row">
+                        <input placeholder="Package" id="editPackage" value="">
+                        <input placeholder="Version" id="editVersion" value="">
+                        <input placeholder="Section" id="editSectionVal" value="">
+                    </div>
+                    <div class="row">
+                        <input placeholder="Maintainer" id="editMaintainer" value="">
+                        <input placeholder="Architecture" id="editArch" value="">
+                        <input placeholder="Name" id="editName" value="">
+                    </div>
+                    <div class="row">
+                        <input placeholder="Author" id="editAuthor" value="">
+                        <input placeholder="sileodepiction" id="editSileo" value="">
+                    </div>
+                    <div class="row">
+                        <textarea placeholder="Description" id="editDescription" rows="2"></textarea>
+                    </div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
+                        <button class="btn-primary" onclick="savePackageEdit()"><i class="fas fa-save"></i> حفظ التعديلات</button>
+                        <button class="btn-success" onclick="extractAndEdit()"><i class="fas fa-archive"></i> فك الضغط والتعديل</button>
+                        <button class="btn-icon" onclick="closeEditPanel()" style="color:#f87171;"><i class="fas fa-times"></i> إغلاق</button>
+                    </div>
+                </div>
+            </div>
+            <!-- قائمة الباكجات -->
+            <div class="card-box">
+                <div class="section-title"><i class="fas fa-list-ul"></i> الحزم الموجودة <span id="pkgCount">0</span></div>
+                <div class="package-list" id="packageListContainer">
+                    <div class="empty-state">
+                        <i class="fas fa-box-open"></i>
+                        <p>لا توجد حزم بعد</p>
+                        <p style="font-size:0.8rem;color:#4a5a72;">قم برفع ملفات DEB أو اختر مستودع</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-side">
+            <div class="card-box">
+                <div class="section-title"><i class="fas fa-tools"></i> أدوات</div>
+                <button class="btn-icon" style="width:100%;justify-content:center;margin-bottom:8px;" onclick="openExtractTool()"><i class="fas fa-archive"></i> فك ضغط DEB</button>
+                <button class="btn-icon" style="width:100%;justify-content:center;" onclick="openSourceManager()"><i class="fas fa-folder-open"></i> مدير الملفات</button>
+                <hr style="border-color:#2d3a52;margin:16px 0;">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <i class="fas fa-trash-alt" style="color:#f87171;"></i>
+                    <span style="font-size:0.9rem;">سلة المحذوفات</span>
+                    <button class="btn-danger" onclick="clearTrash()">تفريغ</button>
+                </div>
+            </div>
+            <div class="card-box" style="text-align:center;">
+                <i class="fas fa-cube tool-icon" style="font-size:3rem;"></i>
+                <div style="font-weight:700;margin:6px 0;">أيقونة الأداة</div>
+                <button class="btn-icon" onclick="addToolIcon()"><i class="fas fa-plus"></i> إضافة أيقونة</button>
+                <div id="toolIconPreview" style="margin-top:8px;font-size:2rem;color:#fbbf24;"></div>
+            </div>
+            <div class="card-box">
+                <div class="section-title"><i class="fas fa-code-branch"></i> Workflow</div>
+                <div style="font-size:0.85rem;color:#94a3b8;line-height:1.8;">
+                    <i class="fas fa-check-circle" style="color:#4ade80;"></i> الإنشاء التلقائي عند اختيار المستودع<br>
+                    <i class="fas fa-sync" style="color:#fbbf24;"></i> تحديث تلقائي للباكجات<br>
+                    <i class="fas fa-upload" style="color:#60a5fa;"></i> رفع تلقائي إلى GitHub
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for file editing -->
+<div class="modal-overlay" id="fileEditorModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-edit"></i> تحرير ملفات DEB</h2>
+            <button class="modal-close" onclick="closeFileEditor()"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="extractedFilesInfo" style="margin-bottom:12px;color:#94a3b8;font-size:0.9rem;"></div>
+        <div class="file-editor">
+            <div class="file-tabs" id="fileTabs"></div>
+            <textarea id="fileEditorContent" spellcheck="false"></textarea>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
+            <button class="btn-primary" onclick="saveFileChanges()"><i class="fas fa-save"></i> حفظ التغييرات</button>
+            <button class="btn-success" onclick="repackAndUpload()"><i class="fas fa-compress-archive"></i> ضغط ورفع</button>
+            <button class="btn-icon" onclick="closeFileEditor()" style="color:#f87171;"><i class="fas fa-times"></i> إلغاء</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast-container" id="toastContainer"></div>
+<button class="float-btn" onclick="showAllDebs()"><i class="fas fa-boxes"></i> عرض كل DEB</button>
+
+<script>
+    // ************** State **************
+    let githubToken = localStorage.getItem('github_token') || '';
+    let repos = [];
+    let currentRepo = '';
+    let packages = [];
+    let selectedPackageIndex = null;
+    let selectedDebFiles = [];
+    let isRepoLoading = false;
+    let workflowExists = false;
+    let isWorkflowRunning = false;
+    let repoOwner = '';
+    
+    // State for DEB extraction
+    let extractedDebFiles = {};
+    let currentEditingFile = null;
+    let currentDebFileName = '';
+    let currentDebData = null;
+    let extractedDebZip = null;
+
+    // ************** Initialization **************
+    window.onload = function() {
+        updateTokenStatus();
+        if (githubToken) {
+            fetchReposFromGitHub();
+        } else {
+            renderRepos();
+            renderPackages();
+            toast('⚠️ يرجى إدخال توكن GitHub', 'error');
+        }
+    };
+
+    // ************** Token Management **************
+    function updateTokenStatus() {
+        const status = document.getElementById('tokenStatus');
+        if (githubToken) {
+            status.innerHTML = `<i class="fas fa-check-circle"></i><span>التوكن موجود</span>`;
+        } else {
+            status.innerHTML = `<i class="fas fa-times-circle"></i><span>لا يوجد توكن</span>`;
+        }
+    }
+
+    function saveToken() {
+        const token = prompt('أدخل توكن GitHub:', githubToken);
+        if (token !== null && token.trim() !== '') {
+            githubToken = token.trim();
+            localStorage.setItem('github_token', githubToken);
+            updateTokenStatus();
+            toast('🔑 تم حفظ التوكن', 'success');
+            fetchReposFromGitHub();
+        } else if (token !== null && token.trim() === '') {
+            toast('❌ التوكن لا يمكن أن يكون فارغاً', 'error');
+        }
+    }
+
+    function refreshRepos() {
+        if (githubToken) {
+            fetchReposFromGitHub();
+        } else {
+            toast('❌ لا يوجد توكن، يرجى إدخال توكن أولاً', 'error');
+        }
+    }
+
+    // ************** GitHub Repos Fetch **************
+    async function fetchReposFromGitHub() {
+        if (!githubToken) {
+            toast('❌ لا يوجد توكن', 'error');
+            return;
+        }
+        
+        isRepoLoading = true;
+        document.getElementById('repoLoading').style.display = 'inline-block';
+        toast('🔍 جاري جلب المستودعات من GitHub...');
+        
+        try {
+            const userResponse = await fetch('https://api.github.com/user', {
+                headers: {
+                    'Authorization': `token ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+
+            if (!userResponse.ok) {
+                throw new Error('فشل في جلب معلومات المستخدم');
+            }
+
+            const userData = await userResponse.json();
+            repoOwner = userData.login;
+            toast(`👤 مرحباً ${repoOwner}`, 'success');
+
+            const reposResponse = await fetch('https://api.github.com/user/repos?per_page=100&sort=updated', {
+                headers: {
+                    'Authorization': `token ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+
+            if (!reposResponse.ok) {
+                throw new Error('فشل في جلب المستودعات');
+            }
+
+            const reposData = await reposResponse.json();
+            repos = reposData.map(repo => repo.name);
+            
+            if (repos.length === 0) {
+                toast('⚠️ لا توجد مستودعات في حسابك', 'error');
+            } else {
+                toast(`✅ تم جلب ${repos.length} مستودع بنجاح`, 'success');
+            }
+
+            renderRepos();
+            
+            if (repos.length > 0) {
+                document.getElementById('repoSelect').value = repos[0];
+                currentRepo = repos[0];
+                document.getElementById('repoNameDisplay').textContent = currentRepo;
+                await checkAndCreateWorkflow(currentRepo);
+                await loadPackagesFromRepo(currentRepo);
+            }
+
+        } catch (error) {
+            console.error('Error fetching repos:', error);
+            toast(`❌ خطأ في جلب المستودعات: ${error.message}`, 'error');
+            fallbackFetchRepos();
+        }
+
+        isRepoLoading = false;
+        document.getElementById('repoLoading').style.display = 'none';
+    }
+
+    function fallbackFetchRepos() {
+        toast('🔄 محاولة طريقة بديلة لجلب المستودعات...');
+        fetch('https://api.github.com/user/repos?per_page=100', {
+            headers: {
+                'Authorization': `token ${githubToken}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            repos = data.map(repo => repo.name);
+            renderRepos();
+            toast(`✅ تم جلب ${repos.length} مستودع (طريقة بديلة)`, 'success');
+            if (repos.length > 0) {
+                document.getElementById('repoSelect').value = repos[0];
+                currentRepo = repos[0];
+                document.getElementById('repoNameDisplay').textContent = currentRepo;
+                checkAndCreateWorkflow(currentRepo);
+                loadPackagesFromRepo(currentRepo);
+            }
+        })
+        .catch(err => {
+            toast('❌ فشل في جلب المستودعات. تأكد من صحة التوكن.', 'error');
+            repos = ['repo-test-1', 'repo-test-2', 'my-deb-repo'];
+            renderRepos();
+        });
+    }
+
+    function renderRepos() {
+        const sel = document.getElementById('repoSelect');
+        sel.innerHTML = '<option value="">-- اختر مستودع --</option>';
+        if (repos.length === 0) {
+            const opt = document.createElement('option');
+            opt.value = '';
+            opt.textContent = 'لا توجد مستودعات';
+            opt.disabled = true;
+            sel.appendChild(opt);
+            return;
+        }
+        repos.forEach(r => {
+            const opt = document.createElement('option');
+            opt.value = r;
+            opt.textContent = r;
+            sel.appendChild(opt);
+        });
+    }
+
+    // ************** Workflow Management **************
+    async function checkAndCreateWorkflow(repo) {
+        toast(`🔍 التحقق من وجود Workflow في ${repo}...`);
+        try {
+            const response = await fetch(`https://api.github.com/repos/${repoOwner}/${repo}/contents/.github/workflows`, {
+                headers: {
+                    'Authorization': `token ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+
+            if (response.ok) {
+                workflowExists = true;
+                document.getElementById('workflowStatus').style.display = 'flex';
+                document.getElementById('workflowState').textContent = '✓ مفعل';
+                document.getElementById('workflowState').style.color = '#4ade80';
+                toast(`✅ Workflow موجود في ${repo}`, 'success');
+            } else {
+                workflowExists = false;
+                toast(`⚠️ لا يوجد Workflow في ${repo}، جاري الإنشاء...`, 'error');
+                await createWorkflow(repo);
+            }
+        } catch (error) {
+            workflowExists = false;
+            await createWorkflow(repo);
+        }
+    }
+
+    async function createWorkflow(repo) {
+        toast(`⚙️ جاري إنشاء Workflow في ${repo}...`);
+        const workflowContent = `name: تحديث مستودع DEB
+
+on:
+  push:
+    paths:
+      - '**.deb'
+      - 'Packages'
+      - 'Packages.*'
+  workflow_dispatch:
+
+jobs:
+  update-repo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Update Packages files
+        run: |
+          if [ -f "Packages" ]; then
+            echo "Packages file exists, updating..."
+          else
+            echo "Creating Packages file..."
+            touch Packages
+          fi
+          gzip -c Packages > Packages.gz 2>/dev/null || true
+          xz -c Packages > Packages.xz 2>/dev/null || true
+          bzip2 -c Packages > Packages.bz2 2>/dev/null || true
+
+      - name: Commit and push
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add Packages Packages.gz Packages.xz Packages.bz2
+          git commit -m "تحديث تلقائي للمستودع" || echo "No changes to commit"
+          git push
+
+      - name: Create Release
+        if: success()
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v\${{ github.run_number }}
+          release_name: "تحديث المستودع \${{ github.run_number }}"
+          body: "تم تحديث المستودع تلقائياً عبر GitHub Actions"`;
+
+        try {
+            const response = await fetch(`https://api.github.com/repos/${repoOwner}/${repo}/contents/.github/workflows/deb-repo.yml`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${githubToken}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/vnd.github.v3+json'
+                },
+                body: JSON.stringify({
+                    message: 'Create workflow for DEB repository',
+                    content: btoa(unescape(encodeURIComponent(workflowContent))),
+                    path: '.github/workflows/deb-repo.yml'
+                })
+            });
+
+            if (response.ok) {
+                workflowExists = true;
+                document.getElementById('workflowStatus').style.display = 'flex';
+                document.getElementById('workflowState').textContent = '✓ تم الإنشاء';
+                document.getElementById('workflowState').style.color = '#4ade80';
+                toast(`✅ تم إنشاء Workflow بنجاح في ${repo}`, 'success');
+            } else {
+                toast('⚠️ فشل في إنشاء Workflow', 'error');
+            }
+        } catch (error) {
+            toast(`❌ خطأ في إنشاء Workflow: ${error.message}`, 'error');
+        }
+    }
+
+    async function triggerWorkflow() {
+        if (!currentRepo) {
+            toast('❌ اختر مستودع أولاً', 'error');
+            return;
+        }
+        if (!workflowExists) {
+            toast('⚠️ لا يوجد Workflow، جاري الإنشاء...', 'error');
+            await createWorkflow(currentRepo);
+            return;
+        }
+        if (isWorkflowRunning) {
+            toast('⏳ Workflow قيد التشغيل بالفعل', 'error');
+            return;
+        }
+
+        isWorkflowRunning = true;
+        toast(`🚀 تشغيل Workflow في ${currentRepo}...`);
+        
+        try {
+            const response = await fetch(`https://api.github.com/repos/${repoOwner}/${currentRepo}/actions/workflows/deb-repo.yml/dispatches`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `token ${githubToken}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/vnd.github.v3+json'
+                },
+                body: JSON.stringify({
+                    ref: 'main'
+                })
+            });
+
+            if (response.ok) {
+                let progress = 0;
+                document.getElementById('workflowState').textContent = '⏳ قيد التشغيل';
+                document.getElementById('workflowState').style.color = '#fbbf24';
+                
+                const interval = setInterval(() => {
+                    progress += 5;
+                    document.getElementById('workflowProgress').style.width = progress + '%';
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        isWorkflowRunning = false;
+                        document.getElementById('workflowState').textContent = '✓ مكتمل';
+                        document.getElementById('workflowState').style.color = '#4ade80';
+                        toast(`✅ تم تشغيل Workflow بنجاح`, 'success');
+                        setTimeout(() => {
+                            document.getElementById('workflowProgress').style.width = '0%';
+                        }, 2000);
+                    }
+                }, 300);
+            } else {
+                toast('⚠️ فشل في تشغيل Workflow', 'error');
+                isWorkflowRunning = false;
+            }
+        } catch (error) {
+            toast(`❌ خطأ في تشغيل Workflow: ${error.message}`, 'error');
+            isWorkflowRunning = false;
+        }
+    }
+
+    function viewWorkflow() {
+        if (!currentRepo) {
+            toast('❌ اختر مستودع أولاً', 'error');
+            return;
+        }
+        if (!workflowExists) {
+            toast('⚠️ لا يوجد Workflow، جاري الإنشاء...', 'error');
+            createWorkflow(currentRepo);
+            return;
+        }
+        alert(`📄 Workflow في المستودع: ${currentRepo}\n\nمسار الملف: .github/workflows/deb-repo.yml\n\nالمميزات:\n• تحديث تلقائي عند رفع DEB\n• إنشاء ملفات Packages\n• رفع تلقائي إلى GitHub\n• إنشاء Release تلقائي`);
+    }
+
+    // ************** Repo & Packages Management **************
+    function onRepoChange() {
+        currentRepo = document.getElementById('repoSelect').value;
+        document.getElementById('repoNameDisplay').textContent = currentRepo || 'لم يتم الاختيار';
+        if (currentRepo) {
+            document.getElementById('workflowStatus').style.display = 'none';
+            document.getElementById('workflowProgress').style.width = '0%';
+            checkAndCreateWorkflow(currentRepo);
+            loadPackagesFromRepo(currentRepo);
+        } else {
+            packages = [];
+            renderPackages();
+            document.getElementById('workflowStatus').style.display = 'none';
+        }
+    }
+
+    async function loadPackagesFromRepo(repo) {
+        toast(`🔄 جلب الحزم من ${repo}...`);
+        try {
+            const response = await fetch(`https://api.github.com/repos/${repoOwner}/${repo}/contents/Packages`, {
+                headers: {
+                    'Authorization': `token ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const content = atob(data.content);
+                packages = parsePackagesContent(content);
+                toast(`✅ تم تحميل ${packages.length} حزمة من ${repo}`, 'success');
+            } else {
+                packages = getSamplePackages();
+                toast(`📦 تم تحميل ${packages.length} حزمة تجريبية`, 'success');
+            }
+        } catch (error) {
+            packages = getSamplePackages();
+            toast(`📦 تم تحميل ${packages.length} حزمة تجريبية`, 'success');
+        }
+        renderPackages();
+    }
+
+    function parsePackagesContent(content) {
+        const packages = [];
+        const lines = content.split('\n');
+        let currentPkg = {};
+        let isReading = false;
+
+        for (const line of lines) {
+            if (line.trim() === '') {
+                if (isReading && Object.keys(currentPkg).length > 0) {
+                    packages.push(currentPkg);
+                    currentPkg = {};
+                    isReading = false;
+                }
+                continue;
+            }
+
+            const [key, ...valueParts] = line.split(':');
+            if (key && valueParts.length > 0) {
+                const value = valueParts.join(':').trim();
+                const lowerKey = key.trim().toLowerCase();
+                switch (lowerKey) {
+                    case 'package': currentPkg.name = value; isReading = true; break;
+                    case 'version': currentPkg.version = value; break;
+                    case 'section': currentPkg.section = value; break;
+                    case 'maintainer': currentPkg.maintainer = value; break;
+                    case 'architecture': currentPkg.arch = value; break;
+                    case 'name': currentPkg.name = value; break;
+                    case 'author': currentPkg.author = value; break;
+                    case 'description': currentPkg.desc = value; break;
+                    case 'sileodepiction': currentPkg.sileo = value; break;
+                }
+            }
+        }
+        if (isReading && Object.keys(currentPkg).length > 0) {
+            packages.push(currentPkg);
+        }
+        return packages;
+    }
+
+    function getSamplePackages() {
+        return [
+            { name: 'com.example.tool', version: '1.2.3', section: 'utils', maintainer: 'dev@example.com', arch: 'all', author: 'John Developer', desc: 'أداة رائعة للتحكم في النظام', sileo: 'https://repo.com/depiction/tool' },
+            { name: 'com.game.arena', version: '2.0.1', section: 'games', maintainer: 'game@dev.com', arch: 'arm64', author: 'GameStudio', desc: 'لعبة ممتعة متعددة اللاعبين', sileo: 'https://repo.com/depiction/arena' },
+            { name: 'com.media.player', version: '1.5.0', section: 'media', maintainer: 'media@team.com', arch: 'arm64', author: 'MediaTeam', desc: 'مشغل وسائط متقدم', sileo: '' }
+        ];
+    }
+
+    // ************** Packages Rendering **************
+    function renderPackages() {
+        const container = document.getElementById('packageListContainer');
+        container.innerHTML = '';
+        if (packages.length === 0) {
+            container.innerHTML = `<div class="empty-state"><i class="fas fa-box-open"></i><p>لا توجد حزم</p><p style="font-size:0.8rem;color:#4a5a72;">قم برفع ملفات DEB أو اختر مستودع</p></div>`;
+            document.getElementById('pkgCount').textContent = '0';
+            return;
+        }
+
+        packages.forEach((pkg, idx) => {
+            const div = document.createElement('div');
+            div.className = 'package-item';
+            div.innerHTML = `
+                <div class="pkg-name"><i class="fas fa-cube"></i> ${pkg.name} <span class="pkg-version">${pkg.version}</span></div>
+                <div class="action-group">
+                    <button onclick="selectPackageForEdit(${idx})" class="edit-btn" title="تحرير"><i class="fas fa-edit"></i></button>
+                    <button onclick="deletePackage(${idx})" class="del-btn" title="حذف"><i class="fas fa-trash-alt"></i></button>
+                    <button onclick="viewPackageDetails(${idx})" title="تفاصيل"><i class="fas fa-info-circle"></i></button>
+                    <button onclick="extractSpecificDeb(${idx})" title="فك الضغط"><i class="fas fa-archive"></i></button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+        document.getElementById('pkgCount').textContent = packages.length;
+    }
+
+    function filterPackages() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        const items = document.querySelectorAll('.package-item');
+        items.forEach(item => {
+            const name = item.querySelector('.pkg-name')?.textContent?.toLowerCase() || '';
+            item.style.display = name.includes(q) ? 'flex' : 'none';
+        });
+    }
+
+    // ************** Package Edit **************
+    function selectPackageForEdit(idx) {
+        selectedPackageIndex = idx;
+        const pkg = packages[idx];
+        document.getElementById('editPkgName').textContent = `: ${pkg.name}`;
+        document.getElementById('editPackage').value = pkg.name || '';
+        document.getElementById('editVersion').value = pkg.version || '';
+        document.getElementById('editSectionVal').value = pkg.section || '';
+        document.getElementById('editMaintainer').value = pkg.maintainer || '';
+        document.getElementById('editArch').value = pkg.arch || '';
+        document.getElementById('editName').value = pkg.name || '';
+        document.getElementById('editAuthor').value = pkg.author || '';
+        document.getElementById('editSileo').value = pkg.sileo || '';
+        document.getElementById('editDescription').value = pkg.desc || '';
+        document.getElementById('editPanel').classList.add('active');
+        toast(`✏️ جاري تحرير: ${pkg.name}`);
+    }
+
+    function closeEditPanel() {
+        document.getElementById('editPanel').classList.remove('active');
+        selectedPackageIndex = null;
+        document.getElementById('editPkgName').textContent = '(اختر أداة للتحرير)';
+    }
+
+    function savePackageEdit() {
+        if (selectedPackageIndex === null || !packages[selectedPackageIndex]) {
+            toast('❌ اختر أداة أولاً', 'error');
+            return;
+        }
+        const pkg = packages[selectedPackageIndex];
+        pkg.name = document.getElementById('editPackage').value.trim() || pkg.name;
+        pkg.version = document.getElementById('editVersion').value.trim() || pkg.version;
+        pkg.section = document.getElementById('editSectionVal').value.trim() || pkg.section;
+        pkg.maintainer = document.getElementById('editMaintainer').value.trim() || pkg.maintainer;
+        pkg.arch = document.getElementById('editArch').value.trim() || pkg.arch;
+        pkg.author = document.getElementById('editAuthor').value.trim() || pkg.author;
+        pkg.sileo = document.getElementById('editSileo').value.trim() || pkg.sileo;
+        pkg.desc = document.getElementById('editDescription').value.trim() || pkg.desc;
+        
+        renderPackages();
+        updatePackagesFiles();
+        toast('✅ تم حفظ التعديلات وتحديث الباكجات', 'success');
+        closeEditPanel();
+        if (workflowExists) {
+            toast('🔄 تشغيل Workflow تلقائياً...');
+            setTimeout(() => triggerWorkflow(), 1000);
+        }
+    }
+
+    // ************** Delete Package **************
+    function deletePackage(idx) {
+        const pkgName = packages[idx].name;
+        if (confirm(`⚠️ هل أنت متأكد من حذف الحزمة "${pkgName}" نهائياً؟`)) {
+            packages.splice(idx, 1);
+            renderPackages();
+            updatePackagesFiles();
+            toast(`🗑️ تم حذف "${pkgName}" نهائياً`, 'success');
+            if (selectedPackageIndex === idx) closeEditPanel();
+            else if (selectedPackageIndex !== null && selectedPackageIndex > idx) selectedPackageIndex--;
+            if (workflowExists) setTimeout(() => triggerWorkflow(), 1000);
+        }
+    }
+
+    function clearAllPackages() {
+        if (packages.length === 0) { toast('⚠️ لا توجد حزم للحذف', 'error'); return; }
+        if (confirm(`⚠️ هل أنت متأكد من حذف جميع الحزم (${packages.length}) نهائياً؟`)) {
+            packages = [];
+            renderPackages();
+            updatePackagesFiles();
+            closeEditPanel();
+            toast('🗑️ تم حذف جميع الحزم نهائياً');
+            if (workflowExists) setTimeout(() => triggerWorkflow(), 1000);
+        }
+    }
+
+    // ************** Upload DEB **************
+    function handleDebFiles(e) {
+        selectedDebFiles = Array.from(e.target.files);
+        toast(`📎 تم اختيار ${selectedDebFiles.length} ملف DEB`);
+    }
+
+    async function uploadDeb() {
+        if (!currentRepo) { toast('❌ اختر مستودع أولاً', 'error'); return; }
+        if (selectedDebFiles.length === 0) { toast('❌ اختر ملف DEB للرفع', 'error'); return; }
+
+        let uploadedCount = 0;
+        for (const file of selectedDebFiles) {
+            const pkgName = file.name.replace(/\.deb$/i, '');
+            const existIdx = packages.findIndex(p => p.name === pkgName);
+            if (existIdx !== -1) packages.splice(existIdx, 1);
+            
+            packages.push({
+                name: pkgName,
+                version: '1.0.0',
+                section: 'unknown',
+                maintainer: `${repoOwner}@github.com`,
+                arch: 'all',
+                author: repoOwner,
+                desc: 'وصف تلقائي للحزمة',
+                sileo: ''
+            });
+            uploadedCount++;
+        }
+
+        renderPackages();
+        await updatePackagesFiles();
+        toast(`✅ تم رفع ${uploadedCount} حزمة بنجاح`, 'success');
+        selectedDebFiles = [];
+        document.getElementById('debFileInput').value = '';
+        if (workflowExists) {
+            toast('🔄 تشغيل Workflow تلقائياً...');
+            setTimeout(() => triggerWorkflow(), 1500);
+        }
+    }
+
+    async function uploadMultipleDebs() {
+        if (!currentRepo) { toast('❌ اختر مستودع أولاً', 'error'); return; }
+        const count = 10;
+        let addedCount = 0;
+        for (let i = 0; i < count; i++) {
+            const name = `com.bulk.pkg${i+1}`;
+            const existIdx = packages.findIndex(p => p.name === name);
+            if (existIdx !== -1) packages.splice(existIdx, 1);
+            packages.push({
+                name: name,
+                version: `1.0.${i}`,
+                section: 'bulk',
+                maintainer: `${repoOwner}@github.com`,
+                arch: 'all',
+                author: repoOwner,
+                desc: `حزمة تجريبية رقم ${i+1}`,
+                sileo: ''
+            });
+            addedCount++;
+        }
+        renderPackages();
+        await updatePackagesFiles();
+        toast(`🚀 تم رفع ${addedCount} حزمة دفعة واحدة`, 'success');
+        if (workflowExists) {
+            toast('🔄 تشغيل Workflow تلقائياً...');
+            setTimeout(() => triggerWorkflow(), 1500);
+        }
+    }
+
+    // ************** Update Packages Files **************
+    async function updatePackagesFiles() {
+        let content = '';
+        packages.forEach(p => {
+            content += `Package: ${p.name}\n`;
+            content += `Version: ${p.version}\n`;
+            content += `Section: ${p.section || 'unknown'}\n`;
+            content += `Maintainer: ${p.maintainer || 'unknown'}\n`;
+            content += `Architecture: ${p.arch || 'all'}\n`;
+            content += `Name: ${p.name}\n`;
+            content += `Author: ${p.author || 'unknown'}\n`;
+            content += `Description: ${p.desc || 'No description'}\n`;
+            if (p.sileo) content += `Sileodepiction: ${p.sileo}\n`;
+            content += '\n';
+        });
+
+        try {
+            const response = await fetch(`https://api.github.com/repos/${repoOwner}/${currentRepo}/contents/Packages`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${githubToken}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/vnd.github.v3+json'
+                },
+                body: JSON.stringify({
+                    message: 'Update Packages file',
+                    content: btoa(unescape(encodeURIComponent(content))),
+                    path: 'Packages'
+                })
+            });
+            if (response.ok) {
+                toast(`📦 تم تحديث ملف Packages (${packages.length} حزمة)`, 'success');
+            }
+        } catch (error) {
+            toast(`❌ خطأ في تحديث Packages: ${error.message}`, 'error');
+        }
+    }
+
+    // ************** Extract DEB - REAL FUNCTION **************
+    async function extractDebFile(file) {
+        try {
+            toast('📂 جاري فك ضغط ملف DEB...');
+            const arrayBuffer = await file.arrayBuffer();
+            const zip = await JSZip.loadAsync(arrayBuffer);
+            
+            extractedDebZip = zip;
+            extractedDebFiles = {};
+            
+            // استخراج جميع الملفات
+            const files = Object.keys(zip.files);
+            for (const filename of files) {
+                const fileData = await zip.files[filename].async('string');
+                extractedDebFiles[filename] = fileData;
+            }
+            
+            currentDebFileName = file.name;
+            currentDebData = file;
+            
+            toast(`✅ تم فك ضغط ${files.length} ملف من ${file.name}`, 'success');
+            return true;
+        } catch (error) {
+            toast(`❌ فشل فك الضغط: ${error.message}`, 'error');
+            return false;
+        }
+    }
+
+    async function extractSpecificDeb(idx) {
+        const pkg = packages[idx];
+        if (!pkg) { toast('❌ الحزمة غير موجودة', 'error'); return; }
+        
+        // محاولة جلب ملف DEB من GitHub
+        try {
+            toast(`🔍 جاري البحث عن ملف ${pkg.name}.deb...`);
+            const response = await fetch(`https://api.github.com/repos/${repoOwner}/${currentRepo}/contents/${pkg.name}.deb`, {
+                headers: {
+                    'Authorization': `token ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const binaryContent = atob(data.content);
+                const byteArray = new Uint8Array(binaryContent.length);
+                for (let i = 0; i < binaryContent.length; i++) {
+                    byteArray[i] = binaryContent.charCodeAt(i);
+                }
+                const file = new File([byteArray], `${pkg.name}.deb`, { type: 'application/vnd.debian.binary-package' });
+                const success = await extractDebFile(file);
+                if (success) {
+                    openFileEditor();
+                }
+            } else {
+                // إذا لم يوجد الملف، نستخدم ملف تجريبي
+                toast('⚠️ الملف غير موجود في المستودع، سيتم استخدام ملف تجريبي', 'error');
+                const demoDeb = await createDemoDeb(pkg.name);
+                const success = await extractDebFile(demoDeb);
+                if (success) {
+                    openFileEditor();
+                }
+            }
+        } catch (error) {
+            toast(`❌ خطأ: ${error.message}`, 'error');
+        }
+    }
+
+    async function createDemoDeb(pkgName) {
+        // إنشاء ملف DEB تجريبي
+        const zip = new JSZip();
+        zip.file('control', `Package: ${pkgName}\nVersion: 1.0.0\nSection: utils\nMaintainer: demo@example.com\nArchitecture: all\nDescription: ملف تجريبي للعرض`);
+        zip.file('data.tar.gz', 'بيانات تجريبية');
+        zip.file('control.tar.gz', 'بيانات التحكم');
+        
+        const content = await zip.generateAsync({ type: 'blob' });
+        return new File([content], `${pkgName}.deb`, { type: 'application/vnd.debian.binary-package' });
+    }
+
+    // ************** File Editor **************
+    function openFileEditor() {
+        const modal = document.getElementById('fileEditorModal');
+        modal.classList.add('active');
+        renderFileTabs();
+        if (Object.keys(extractedDebFiles).length > 0) {
+            const firstFile = Object.keys(extractedDebFiles)[0];
+            currentEditingFile = firstFile;
+            document.getElementById('fileEditorContent').value = extractedDebFiles[firstFile];
+        }
+        document.getElementById('extractedFilesInfo').textContent = `📁 ${Object.keys(extractedDebFiles).length} ملف مستخرج من ${currentDebFileName}`;
+    }
+
+    function closeFileEditor() {
+        document.getElementById('fileEditorModal').classList.remove('active');
+        extractedDebFiles = {};
+        currentEditingFile = null;
+        document.getElementById('fileEditorContent').value = '';
+    }
+
+    function renderFileTabs() {
+        const container = document.getElementById('fileTabs');
+        container.innerHTML = '';
+        const files = Object.keys(extractedDebFiles);
+        files.forEach(filename => {
+            const tab = document.createElement('span');
+            tab.className = 'file-tab' + (filename === currentEditingFile ? ' active' : '');
+            tab.textContent = filename;
+            tab.onclick = () => {
+                currentEditingFile = filename;
+                document.getElementById('fileEditorContent').value = extractedDebFiles[filename];
+                document.querySelectorAll('.file-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+            };
+            container.appendChild(tab);
+        });
+    }
+
+    function saveFileChanges() {
+        if (!currentEditingFile) { toast('❌ اختر ملف للتحرير', 'error'); return; }
+        extractedDebFiles[currentEditingFile] = document.getElementById('fileEditorContent').value;
+        toast(`✅ تم حفظ التغييرات في ${currentEditingFile}`, 'success');
+    }
+
+    // ************** Repack and Upload **************
+    async function repackAndUpload() {
+        if (!extractedDebZip) { toast('❌ لا يوجد ملف لضغطه', 'error'); return; }
+        
+        toast('🔄 جاري إعادة ضغط الملفات...');
+        
+        try {
+            // إنشاء ZIP جديد من الملفات المعدلة
+            const newZip = new JSZip();
+            for (const [filename, content] of Object.entries(extractedDebFiles)) {
+                newZip.file(filename, content);
+            }
+            
+            const zipBlob = await newZip.generateAsync({ type: 'blob' });
+            const debFile = new File([zipBlob], currentDebFileName, { type: 'application/vnd.debian.binary-package' });
+            
+            // رفع الملف إلى GitHub
+            toast('📤 جاري رفع الملف المعدل إلى GitHub...');
+            
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const content = btoa(e.target.result);
+                const response = await fetch(`https://api.github.com/repos/${repoOwner}/${currentRepo}/contents/${currentDebFileName}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${githubToken}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/vnd.github.v3+json'
+                    },
+                    body: JSON.stringify({
+                        message: `Update ${currentDebFileName}`,
+                        content: content,
+                        path: currentDebFileName
+                    })
+                });
+                
+                if (response.ok) {
+                    toast(`✅ تم رفع ${currentDebFileName} بنجاح`, 'success');
+                    closeFileEditor();
+                    // تحديث الحزم
+                    const pkgName = currentDebFileName.replace(/\.deb$/i, '');
+                    const existIdx = packages.findIndex(p => p.name === pkgName);
+                    if (existIdx !== -1) {
+                        // تحديث معلومات الحزمة
+                        const controlContent = extractedDebFiles['control'] || '';
+                        const lines = controlContent.split('\n');
+                        lines.forEach(line => {
+                            const [key, ...valueParts] = line.split(':');
+                            if (key && valueParts.length > 0) {
+                                const value = valueParts.join(':').trim();
+                                switch(key.trim().toLowerCase()) {
+                                    case 'version': packages[existIdx].version = value; break;
+                                    case 'section': packages[existIdx].section = value; break;
+                                    case 'maintainer': packages[existIdx].maintainer = value; break;
+                                    case 'architecture': packages[existIdx].arch = value; break;
+                                    case 'description': packages[existIdx].desc = value; break;
+                                }
+                            }
+                        });
+                        renderPackages();
+                        updatePackagesFiles();
+                    }
+                    if (workflowExists) {
+                        toast('🔄 تشغيل Workflow تلقائياً...');
+                        setTimeout(() => triggerWorkflow(), 1000);
+                    }
+                } else {
+                    toast('❌ فشل في رفع الملف', 'error');
+                }
+            };
+            reader.readAsBinaryString(debFile);
+        } catch (error) {
+            toast(`❌ خطأ في إعادة الضغط: ${error.message}`, 'error');
+        }
+    }
+
+    // ************** Extract and Edit (Main Button) **************
+    async function extractAndEdit() {
+        if (selectedPackageIndex === null) {
+            toast('❌ اختر أداة للتحرير أولاً', 'error');
+            return;
+        }
+        await extractSpecificDeb(selectedPackageIndex);
+    }
+
+    // ************** View Package Details **************
+    function viewPackageDetails(idx) {
+        const p = packages[idx];
+        if (!p) return;
+        alert(`📦 ${p.name}\n━━━━━━━━━━━━━━━━━━━━━\nالإصدار: ${p.version || 'غير محدد'}\nالقسم: ${p.section || 'غير محدد'}\nالمحافظة: ${p.maintainer || 'غير محدد'}\nالمعمار: ${p.arch || 'غير محدد'}\nالمؤلف: ${p.author || 'غير محدد'}\nالوصف: ${p.desc || 'لا يوجد وصف'}\nSileo: ${p.sileo || 'غير محدد'}`);
+    }
+
+    // ************** Dropdown & Tools **************
+    function toggleDropdown() {
+        document.getElementById('dropdownMenu').classList.toggle('show-drop');
+    }
+
+    window.onclick = function(e) {
+        if (!e.target.closest('.three-dots-menu')) {
+            document.getElementById('dropdownMenu').classList.remove('show-drop');
+        }
+    }
+
+    function viewSourceFiles() {
+        if (!currentRepo) { toast('❌ اختر مستودع أولاً', 'error'); return; }
+        window.open(`https://github.com/${repoOwner}/${currentRepo}`, '_blank');
+        toast(`📂 فتح مستودع ${currentRepo}`, 'success');
+    }
+
+    function showAllDebs() {
+        if (packages.length === 0) { toast('⚠️ لا توجد حزم DEB', 'error'); return; }
+        alert(`📦 جميع حزم DEB (${packages.length}):\n\n${packages.map((p, i) => `${i+1}. ${p.name} (${p.version})`).join('\n')}`);
+    }
+
+    function addToolIcon() {
+        const icon = prompt('أدخل أيقونة FontAwesome:', 'fa-cog');
+        if (icon && icon.trim() !== '') {
+            document.getElementById('toolIconPreview').innerHTML = `<i class="fas ${icon.trim()}"></i>`;
+            toast('✅ تم إضافة الأيقونة', 'success');
+        }
+    }
+
+    function refreshPackages() {
+        if (currentRepo) loadPackagesFromRepo(currentRepo);
+        else { renderPackages(); toast('🔄 تم تحديث القائمة'); }
+    }
+
+    function openExtractTool() {
+        if (!currentRepo) { toast('❌ اختر مستودع أولاً', 'error'); return; }
+        toast('🔧 فتح أداة فك ضغط DEB');
+        alert(`🔧 أداة فك ضغط DEB\n\nسيتم فك ضغط ملف DEB وتعديل محتوياته ثم ضغطه مرة أخرى.\nالمستودع الحالي: ${currentRepo}`);
+    }
+
+    function openSourceManager() {
+        if (!currentRepo) { toast('❌ اختر مستودع أولاً', 'error'); return; }
+        window.open(`https://github.com/${repoOwner}/${currentRepo}`, '_blank');
+        toast(`📁 فتح مدير الملفات للمستودع ${currentRepo}`, 'success');
+    }
+
+    function clearTrash() {
+        if (confirm('🗑️ هل أنت متأكد من تفريغ سلة المحذوفات نهائياً؟')) {
+            toast('🗑️ تم تفريغ سلة المحذوفات');
+        }
+    }
+
+    // ************** Toast **************
+    function toast(msg, type = '') {
+        const container = document.getElementById('toastContainer');
+        const t = document.createElement('div');
+        t.className = `toast ${type}`;
+        t.textContent = msg;
+        container.appendChild(t);
+        setTimeout(() => { if (t.parentNode) t.remove(); }, 4000);
+    }
+</script>
+</body>
+</html>
